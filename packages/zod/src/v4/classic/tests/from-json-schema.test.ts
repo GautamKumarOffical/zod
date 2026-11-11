@@ -883,6 +883,33 @@ test("array without items", () => {
   expect(schema.parse([1, "string", true])).toEqual([1, "string", true]);
 });
 
+test("array without items respects minItems and maxItems", () => {
+  const schema = fromJSONSchema({
+    type: "array",
+    minItems: 2,
+    maxItems: 4,
+  });
+  expect(schema.safeParse([1, "a"]).success).toBe(true);
+  expect(schema.safeParse([1, "a", true, null]).success).toBe(true);
+  expect(schema.safeParse([]).success).toBe(false);
+  expect(schema.safeParse([1]).success).toBe(false);
+  expect(schema.safeParse([1, 2, 3, 4, 5]).success).toBe(false);
+  expect(z.toJSONSchema(schema)).toMatchObject({
+    type: "array",
+    minItems: 2,
+    maxItems: 4,
+  });
+
+  const emptyOnly = fromJSONSchema({ type: "array", minItems: 0, maxItems: 0 });
+  expect(emptyOnly.safeParse([]).success).toBe(true);
+  expect(emptyOnly.safeParse([1]).success).toBe(false);
+
+  const guarded = fromJSONSchema({ type: "array", minItems: 2, uniqueItems: true });
+  expect(guarded.safeParse([1, 2]).success).toBe(true);
+  expect(guarded.safeParse([1]).success).toBe(false);
+  expect(guarded.safeParse([1, 1]).success).toBe(false);
+});
+
 test("mixed enum types", () => {
   const schema = fromJSONSchema({
     enum: ["string", 42, true, null],

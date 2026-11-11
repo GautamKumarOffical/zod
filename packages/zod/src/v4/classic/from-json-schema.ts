@@ -765,12 +765,10 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         if (typeof schema.maxItems === "number") {
           zodSchema = zodSchema.check(z.maxLength(schema.maxItems));
         }
-      } else if (items !== undefined) {
-        // Regular array
-        const element = convertSchema(items as JSONSchema.JSONSchema, ctx);
+      } else {
+        const element = items !== undefined ? convertSchema(items as JSONSchema.JSONSchema, ctx) : z.any();
         let arraySchema = z.array(element);
 
-        // Apply constraints
         if (typeof schema.minItems === "number") {
           arraySchema = arraySchema.min(schema.minItems);
         }
@@ -779,9 +777,6 @@ function convertBaseSchema(schema: JSONSchema.JSONSchema, ctx: ConversionContext
         }
 
         zodSchema = arraySchema;
-      } else {
-        // No items specified - array of any
-        zodSchema = z.array(z.any());
       }
 
       // minContains/maxContains only constrain anything when `contains` itself is present
